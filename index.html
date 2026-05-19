@@ -479,6 +479,71 @@
   }
   .sub-message.show { opacity: 1; }
 
+  /* Hype overlay — sits over the letter zone during build-up */
+  .hype-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 15;
+    padding: 0 12px;
+  }
+  .hype-message {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(34px, 6.5vw, 96px);
+    letter-spacing: 5px;
+    color: #ffd76b;
+    text-shadow:
+      0 0 18px rgba(255, 215, 107, 1),
+      0 0 45px rgba(255, 184, 0, 0.85),
+      0 0 90px rgba(255, 100, 0, 0.5);
+    opacity: 0;
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1;
+  }
+  .hype-message.chant {
+    font-size: clamp(54px, 11vw, 160px);
+    letter-spacing: 6px;
+    background: linear-gradient(180deg, #fff 0%, #ffd76b 45%, #ff4d8d 80%, #ff2a3a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 25px rgba(255, 77, 141, 0.9));
+    text-shadow: none;
+  }
+
+  /* Stadium flash overlay — full screen white flash on big beats */
+  .flash-overlay {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 60;
+    mix-blend-mode: screen;
+  }
+  .flash-overlay.flash {
+    animation: flashHit 0.4s ease-out;
+  }
+  @keyframes flashHit {
+    0% { opacity: 0; }
+    20% { opacity: 0.45; }
+    100% { opacity: 0; }
+  }
+
+  /* Stadium shake during peak hype */
+  @keyframes stadiumShake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-3px, 2px); }
+    40% { transform: translate(3px, -2px); }
+    60% { transform: translate(-2px, -3px); }
+    80% { transform: translate(2px, 3px); }
+  }
+  #stadium.shake { animation: stadiumShake 0.5s ease-in-out; }
+
   /* ---- Ticker ---- */
   .ticker-wrap {
     border-top: 1px solid rgba(255, 184, 0, 0.15);
@@ -637,6 +702,9 @@
               <span class="isha-letter">A</span>
             </div>
             <div class="sub-message" id="subMessage">THE CROWD GOES WILD</div>
+            <div class="hype-overlay">
+              <div class="hype-message" id="hypeMessage"></div>
+            </div>
           </div>
 
           <!-- Ticker -->
@@ -659,6 +727,7 @@
 
   <!-- Effects layers -->
   <div class="confetti-container" id="confettiContainer"></div>
+  <div class="flash-overlay" id="flashOverlay"></div>
 
   <!-- Controls -->
   <div class="controls" id="controls">
@@ -802,6 +871,142 @@ function airHorn() {
   }
 }
 
+/* ---------- Audio: short single horn blast for hype beats ---------- */
+function hornBlast(intensity = 1) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const osc2 = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc2.type = 'sawtooth';
+  osc.frequency.setValueAtTime(180, t);
+  osc.frequency.linearRampToValueAtTime(220, t + 0.22);
+  osc2.frequency.setValueAtTime(183, t);
+  osc2.frequency.linearRampToValueAtTime(223, t + 0.22);
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 2000;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.18 * intensity, t + 0.03);
+  g.gain.linearRampToValueAtTime(0.16 * intensity, t + 0.2);
+  g.gain.linearRampToValueAtTime(0, t + 0.28);
+  osc.connect(lp); osc2.connect(lp);
+  lp.connect(g).connect(masterGain);
+  osc.start(t); osc.stop(t + 0.3);
+  osc2.start(t); osc2.stop(t + 0.3);
+}
+
+/* ---------- Audio: crowd chant "ISHA! ISHA!" ----------
+   Layered detuned voices through vowel-formant bandpass filters
+   simulate a crowd shouting the two-syllable name.
+*/
+function chantVowel(t, dur, f1, f2, amp) {
+  const fundamentals = [98, 130, 174, 220];      // low to high voices
+  const detuneCents = [-7, 0, 7];
+  const ampPerVoice = amp / (fundamentals.length * detuneCents.length);
+  fundamentals.forEach(fund => {
+    detuneCents.forEach(cents => {
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.value = fund * Math.pow(2, cents / 1200);
+      const bp1 = audioCtx.createBiquadFilter();
+      bp1.type = 'bandpass';
+      bp1.frequency.value = f1;
+      bp1.Q.value = 6;
+      const bp2 = audioCtx.createBiquadFilter();
+      bp2.type = 'bandpass';
+      bp2.frequency.value = f2;
+      bp2.Q.value = 7;
+      const env = audioCtx.createGain();
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(ampPerVoice, t + 0.04);
+      env.gain.linearRampToValueAtTime(ampPerVoice * 0.85, t + dur * 0.7);
+      env.gain.linearRampToValueAtTime(0, t + dur);
+      osc.connect(bp1);
+      osc.connect(bp2);
+      bp1.connect(env);
+      bp2.connect(env);
+      env.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + dur + 0.05);
+    });
+  });
+}
+
+function chantNoiseBurst(t, dur, hpFreq, amp) {
+  const sr = audioCtx.sampleRate;
+  const len = Math.ceil(sr * (dur + 0.05));
+  const buf = audioCtx.createBuffer(1, len, sr);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  const hp = audioCtx.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = hpFreq;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(amp, t + 0.02);
+  g.gain.linearRampToValueAtTime(amp * 0.45, t + dur * 0.5);
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  src.connect(hp).connect(g).connect(masterGain);
+  src.start(t);
+  src.stop(t + dur + 0.1);
+}
+
+function scheduleChantAudio(times, cycleSec) {
+  if (!audioCtx) return;
+  const t0 = audioCtx.currentTime + 0.05;
+  for (let n = 0; n < times; n++) {
+    const s = t0 + n * cycleSec;
+    // "I" vowel — EE formants (F1 ~280, F2 ~2200)
+    chantVowel(s, 0.18, 280, 2200, 0.22);
+    // "SH" — bright noise burst
+    chantNoiseBurst(s + 0.18, 0.10, 4200, 0.13);
+    // "AH" vowel — AH formants (F1 ~750, F2 ~1100)
+    chantVowel(s + 0.22, 0.38, 750, 1100, 0.28);
+  }
+}
+
+/* ---------- Audio: rising build-up whoosh before the reveal ---------- */
+function buildupWhoosh(duration = 1.0) {
+  if (!audioCtx) return;
+  const t0 = audioCtx.currentTime;
+  const sr = audioCtx.sampleRate;
+  const len = Math.ceil(sr * (duration + 0.2));
+  const buf = audioCtx.createBuffer(1, len, sr);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+
+  const bp = audioCtx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.setValueAtTime(250, t0);
+  bp.frequency.exponentialRampToValueAtTime(6500, t0 + duration);
+  bp.Q.value = 1.2;
+  const ng = audioCtx.createGain();
+  ng.gain.setValueAtTime(0, t0);
+  ng.gain.linearRampToValueAtTime(0.32, t0 + duration * 0.9);
+  ng.gain.linearRampToValueAtTime(0, t0 + duration + 0.05);
+
+  // Rising pitched sweep beneath
+  const osc = audioCtx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(70, t0);
+  osc.frequency.exponentialRampToValueAtTime(520, t0 + duration);
+  const og = audioCtx.createGain();
+  og.gain.setValueAtTime(0, t0);
+  og.gain.linearRampToValueAtTime(0.11, t0 + duration * 0.9);
+  og.gain.linearRampToValueAtTime(0, t0 + duration + 0.05);
+
+  src.connect(bp).connect(ng).connect(masterGain);
+  osc.connect(og).connect(masterGain);
+  src.start(t0); src.stop(t0 + duration + 0.15);
+  osc.start(t0); osc.stop(t0 + duration + 0.15);
+}
+
 /* ---------- Audio: triumphant fanfare ---------- */
 function playFanfare() {
   if (!audioCtx) return;
@@ -887,8 +1092,7 @@ function startBackgroundLoop() {
     setTimeout(playPattern, pattern.length * 500);
   };
 
-  // Begin loop after fanfare completes
-  setTimeout(playPattern, 3800);
+  playPattern();
 }
 
 /* =========================================================
@@ -1020,6 +1224,56 @@ function revealLetters() {
   });
 }
 
+/* ---------- Visual hype overlay helpers ---------- */
+const hypeMessage = $('hypeMessage');
+const flashOverlay = $('flashOverlay');
+
+function showHype(text, durationMs = 900, chant = false) {
+  hypeMessage.textContent = text;
+  hypeMessage.classList.toggle('chant', chant);
+  hypeMessage.animate([
+    { opacity: 0, transform: 'scale(0.55)', filter: 'blur(8px)' },
+    { opacity: 1, transform: 'scale(1.18)', filter: 'blur(0)', offset: 0.22 },
+    { opacity: 1, transform: 'scale(1)', filter: 'blur(0)', offset: 0.7 },
+    { opacity: 0, transform: 'scale(1.08)', filter: 'blur(2px)' }
+  ], { duration: durationMs, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'none' });
+}
+
+function pulseChant(text) {
+  hypeMessage.textContent = text;
+  hypeMessage.classList.add('chant');
+  hypeMessage.animate([
+    { opacity: 0.55, transform: 'scale(0.8)', filter: 'drop-shadow(0 0 10px rgba(255,184,0,0.5))' },
+    { opacity: 1, transform: 'scale(1.28)', filter: 'drop-shadow(0 0 45px rgba(255,77,141,1))', offset: 0.22 },
+    { opacity: 0.95, transform: 'scale(1.02)', filter: 'drop-shadow(0 0 28px rgba(255,184,0,0.8))', offset: 0.7 },
+    { opacity: 0, transform: 'scale(0.95)', filter: 'drop-shadow(0 0 10px rgba(255,184,0,0.3))' }
+  ], { duration: 620, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'none' });
+}
+
+function screenFlash() {
+  flashOverlay.classList.remove('flash');
+  void flashOverlay.offsetWidth;
+  flashOverlay.classList.add('flash');
+}
+
+function shakeStadium() {
+  stadium.classList.remove('shake');
+  void stadium.offsetWidth;
+  stadium.classList.add('shake');
+}
+
+function startChantSequence(times, cycleMs) {
+  scheduleChantAudio(times, cycleMs / 1000);
+  for (let i = 0; i < times; i++) {
+    setTimeout(() => {
+      pulseChant('ISHA!');
+      // shake on every other chant for extra intensity
+      if (i % 2 === 1) shakeStadium();
+    }, i * cycleMs);
+  }
+  return times * cycleMs;
+}
+
 let started = false;
 function start() {
   if (started) return;
@@ -1040,24 +1294,50 @@ function start() {
     buildCrowd();
     runClock();
     animateScores();
-    createCrowdRoar();
+    const roar = createCrowdRoar();
     scheduleWhistles();
 
-    // Reveal sequence
-    setTimeout(() => $('celebrateLine').classList.add('show'), 800);
-    setTimeout(() => { airHorn(); }, 1400);
-    setTimeout(() => { playFanfare(); revealLetters(); }, 1600);
-    setTimeout(() => { confettiBurst(); fireworksShow(); }, 2200);
-    setTimeout(() => $('subMessage').classList.add('show'), 3400);
-    setTimeout(() => startBackgroundLoop(), 4200);
-    setTimeout(() => controls.classList.add('show'), 5000);
+    // -------- HYPE BUILDUP --------
+    setTimeout(() => $('celebrateLine').classList.add('show'), 500);
 
-    // Periodic celebrations
-    setInterval(() => {
-      fireworksShow();
-      spawnConfetti(40);
-    }, 12000);
-    setInterval(() => airHorn(), 22000);
+    // Pump-up callouts — get the crowd on its feet
+    setTimeout(() => { showHype('GET LOUD!'); hornBlast(0.8); }, 1300);
+    setTimeout(() => { showHype('MAKE SOME NOISE!'); }, 2200);
+    setTimeout(() => { showHype('EVERYBODY ON YOUR FEET!'); hornBlast(0.8); }, 3100);
+    setTimeout(() => { showHype('SAY HER NAME!'); }, 4000);
+
+    // Boost the crowd roar going into the chant
+    setTimeout(() => {
+      if (roar) roar.gain.gain.linearRampToValueAtTime(0.55, audioCtx.currentTime + 0.4);
+    }, 4400);
+
+    // -------- CROWD CHANT: ISHA! ISHA! (6 times) --------
+    const CHANT_COUNT = 6;
+    const CHANT_CYCLE_MS = 780;
+    const CHANT_START = 4800;
+    setTimeout(() => startChantSequence(CHANT_COUNT, CHANT_CYCLE_MS), CHANT_START);
+
+    // -------- BUILDUP & REVEAL --------
+    const CHANT_END = CHANT_START + CHANT_COUNT * CHANT_CYCLE_MS; // ~9480ms
+    const WHOOSH_AT = CHANT_END + 200;
+    const REVEAL_AT = WHOOSH_AT + 1000;
+
+    setTimeout(() => buildupWhoosh(1.0), WHOOSH_AT);
+    setTimeout(() => { airHorn(); screenFlash(); shakeStadium(); }, REVEAL_AT - 100);
+    setTimeout(() => { playFanfare(); revealLetters(); }, REVEAL_AT);
+    setTimeout(() => { confettiBurst(); fireworksShow(); }, REVEAL_AT + 500);
+    setTimeout(() => $('subMessage').classList.add('show'), REVEAL_AT + 1700);
+    setTimeout(() => startBackgroundLoop(), REVEAL_AT + 2500);
+    setTimeout(() => controls.classList.add('show'), REVEAL_AT + 3300);
+
+    // Periodic celebrations (kick off after the reveal settles)
+    setTimeout(() => {
+      setInterval(() => {
+        fireworksShow();
+        spawnConfetti(40);
+      }, 12000);
+      setInterval(() => airHorn(), 22000);
+    }, REVEAL_AT + 4000);
   }, 600);
 }
 
