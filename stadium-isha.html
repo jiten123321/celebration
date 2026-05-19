@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stadium · Tonight We Celebrate Isha</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --led-red: #ff2a3a;
+    --led-amber: #ffb800;
+    --led-white: #ffffff;
+    --led-green: #4dff5a;
+    --led-pink: #ff4d8d;
+    --stadium-night: #050714;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* =========================================================
+     WELCOME SCREEN
+     ========================================================= */
+  #welcome {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at center top, rgba(255, 200, 80, 0.12), transparent 60%),
+      radial-gradient(ellipse at center bottom, rgba(255, 77, 141, 0.08), transparent 70%),
+      linear-gradient(180deg, #0a0e1f 0%, #050714 60%, #000 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: opacity 1s ease, transform 1s ease;
+  }
+  #welcome.hide {
+    opacity: 0;
+    transform: scale(1.08);
+    pointer-events: none;
+  }
+
+  /* faint stadium silhouette behind welcome */
+  .welcome-stadium-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 90%, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 2px),
+      radial-gradient(circle at 35% 92%, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 2px),
+      radial-gradient(circle at 65% 91%, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 2px),
+      radial-gradient(circle at 85% 93%, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 2px);
+    pointer-events: none;
+  }
+
+  .lights-row {
+    position: absolute;
+    top: 8%;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-around;
+    pointer-events: none;
+  }
+  .light {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #ffd76b;
+    box-shadow:
+      0 0 12px #ffd76b,
+      0 0 30px rgba(255, 215, 107, 0.6),
+      0 0 60px rgba(255, 215, 107, 0.3);
+    animation: lightFlicker 3s infinite ease-in-out;
+  }
+  .light:nth-child(2) { animation-delay: .4s; }
+  .light:nth-child(3) { animation-delay: .8s; }
+  .light:nth-child(4) { animation-delay: 1.2s; }
+  .light:nth-child(5) { animation-delay: 1.6s; }
+  .light:nth-child(6) { animation-delay: 2.0s; }
+  @keyframes lightFlicker {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.9); }
+  }
+
+  .welcome-content {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    padding: 0 24px;
+  }
+
+  .welcome-kicker {
+    font-family: 'VT323', monospace;
+    font-size: clamp(14px, 2vw, 20px);
+    letter-spacing: 6px;
+    color: #ffb800;
+    text-shadow: 0 0 12px rgba(255, 184, 0, 0.7);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeIn 1.2s 0.2s forwards;
+  }
+
+  .welcome-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 9vw, 130px);
+    line-height: 0.95;
+    letter-spacing: 2px;
+    background: linear-gradient(180deg, #fff 0%, #ffd76b 60%, #ff8a00 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 40px rgba(255, 200, 80, 0.4);
+    opacity: 0;
+    animation: fadeIn 1.4s 0.5s forwards;
+  }
+
+  .welcome-sub {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(18px, 2.4vw, 28px);
+    letter-spacing: 4px;
+    color: #d0d6e8;
+    margin-top: 16px;
+    margin-bottom: 56px;
+    opacity: 0;
+    animation: fadeIn 1.2s 0.9s forwards;
+  }
+
+  .enter-btn {
+    position: relative;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(20px, 2.6vw, 30px);
+    letter-spacing: 6px;
+    color: #0a0e1f;
+    background: linear-gradient(180deg, #ffe27a 0%, #ffb800 60%, #ff8a00 100%);
+    border: none;
+    padding: 22px 56px;
+    cursor: pointer;
+    border-radius: 6px;
+    box-shadow:
+      0 0 0 3px rgba(255, 200, 80, 0.2),
+      0 0 30px rgba(255, 184, 0, 0.5),
+      0 0 60px rgba(255, 184, 0, 0.3),
+      inset 0 -4px 0 rgba(0,0,0,0.25);
+    transition: transform 0.15s ease, box-shadow 0.3s ease;
+    opacity: 0;
+    animation: fadeIn 1.2s 1.4s forwards, btnPulse 2.2s 2.6s infinite;
+  }
+  .enter-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow:
+      0 0 0 3px rgba(255, 200, 80, 0.3),
+      0 0 50px rgba(255, 184, 0, 0.8),
+      0 0 100px rgba(255, 184, 0, 0.5),
+      inset 0 -4px 0 rgba(0,0,0,0.25);
+  }
+  .enter-btn:active { transform: translateY(1px) scale(0.99); }
+
+  @keyframes btnPulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(255, 200, 80, 0.2), 0 0 30px rgba(255, 184, 0, 0.5), 0 0 60px rgba(255, 184, 0, 0.3), inset 0 -4px 0 rgba(0,0,0,0.25); }
+    50% { box-shadow: 0 0 0 3px rgba(255, 200, 80, 0.4), 0 0 60px rgba(255, 184, 0, 0.9), 0 0 120px rgba(255, 184, 0, 0.6), inset 0 -4px 0 rgba(0,0,0,0.25); }
+  }
+
+  .audio-hint {
+    margin-top: 36px;
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: rgba(255, 255, 255, 0.4);
+    opacity: 0;
+    animation: fadeIn 1.2s 1.8s forwards;
+  }
+  .audio-hint::before { content: "♪ "; color: #ffb800; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* =========================================================
+     STADIUM SCENE
+     ========================================================= */
+  #stadium {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at center 30%, rgba(80, 110, 200, 0.15), transparent 60%),
+      linear-gradient(180deg, #0a0e1f 0%, #060819 40%, #02030a 100%);
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+  #stadium.show { opacity: 1; }
+
+  /* Stadium lights (top corners + ring) */
+  .stadium-light {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #fff8d6;
+    border-radius: 50%;
+    box-shadow:
+      0 0 20px #fff8d6,
+      0 0 50px rgba(255, 248, 214, 0.7),
+      0 0 100px rgba(255, 220, 100, 0.4);
+  }
+
+  .spotlight {
+    position: absolute;
+    width: 120vmax;
+    height: 120vmax;
+    top: -20vmax;
+    background:
+      radial-gradient(ellipse at center,
+        rgba(255, 240, 180, 0.06) 0%,
+        rgba(255, 240, 180, 0.025) 30%,
+        transparent 60%);
+    transform-origin: center top;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  .spotlight.s1 { left: -10vmax; animation: sweepLeft 9s ease-in-out infinite; }
+  .spotlight.s2 { right: -10vmax; animation: sweepRight 11s ease-in-out infinite; }
+
+  @keyframes sweepLeft {
+    0%, 100% { transform: rotate(15deg); }
+    50% { transform: rotate(45deg); }
+  }
+  @keyframes sweepRight {
+    0%, 100% { transform: rotate(-15deg); }
+    50% { transform: rotate(-45deg); }
+  }
+
+  /* Crowd silhouette at bottom */
+  .crowd {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .crowd-head {
+    position: absolute;
+    bottom: 0;
+    width: 22px;
+    height: 30px;
+    background: #000;
+    border-radius: 50% 50% 30% 30% / 60% 60% 30% 30%;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.05);
+  }
+  .crowd-arm {
+    position: absolute;
+    bottom: 22px;
+    width: 4px;
+    height: 18px;
+    background: #000;
+    border-radius: 4px 4px 0 0;
+    transform-origin: bottom center;
+    animation: wave 1.4s ease-in-out infinite;
+  }
+  @keyframes wave {
+    0%, 100% { transform: rotate(-8deg); }
+    50% { transform: rotate(10deg); }
+  }
+
+  /* =========================================================
+     JUMBOTRON
+     ========================================================= */
+  .jumbotron-wrap {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -54%);
+    width: min(92vw, 1080px);
+    z-index: 10;
+  }
+
+  /* Support struts */
+  .strut {
+    position: absolute;
+    bottom: -80px;
+    width: 14px;
+    background: linear-gradient(180deg, #1a1f2e 0%, #0a0e1f 100%);
+    border: 1px solid rgba(255,255,255,0.05);
+    height: 90px;
+    z-index: -1;
+  }
+  .strut.left { left: 18%; transform: skewX(-3deg); }
+  .strut.right { right: 18%; transform: skewX(3deg); }
+
+  .jumbotron {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #04050b;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow:
+      0 0 0 4px #1a1f2e,
+      0 0 0 8px #2a3146,
+      0 0 0 10px #0a0e1f,
+      0 30px 80px rgba(0,0,0,0.8),
+      0 0 100px rgba(255, 184, 0, 0.15);
+    overflow: hidden;
+  }
+
+  /* LED scanline overlay */
+  .jumbotron::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0,0,0,0.18) 3px,
+        transparent 4px
+      );
+    pointer-events: none;
+    z-index: 100;
+    mix-blend-mode: multiply;
+  }
+
+  /* Subtle screen glow */
+  .jumbotron::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  .jumbotron-inner {
+    width: 100%;
+    height: 100%;
+    background: #04050b;
+    border-radius: 4px;
+    padding: 14px 20px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 10px;
+    position: relative;
+  }
+
+  /* ---- Scoreboard top strip ---- */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 18px;
+    font-family: 'VT323', monospace;
+    border-bottom: 1px solid rgba(255, 184, 0, 0.15);
+    padding-bottom: 10px;
+  }
+
+  .team {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .team.away { justify-content: flex-end; }
+
+  .team-name {
+    font-size: clamp(16px, 2.2vw, 28px);
+    letter-spacing: 3px;
+    color: var(--led-amber);
+    text-shadow: 0 0 10px rgba(255, 184, 0, 0.6);
+  }
+
+  .team-score {
+    font-size: clamp(28px, 4.5vw, 60px);
+    font-weight: bold;
+    color: var(--led-red);
+    text-shadow: 0 0 12px rgba(255, 42, 58, 0.8), 0 0 30px rgba(255, 42, 58, 0.4);
+    min-width: 1.5em;
+    text-align: center;
+    line-height: 1;
+  }
+
+  .clock {
+    font-size: clamp(18px, 2.6vw, 30px);
+    color: var(--led-green);
+    text-shadow: 0 0 10px rgba(77, 255, 90, 0.6);
+    text-align: center;
+    letter-spacing: 2px;
+  }
+  .clock-label {
+    font-size: clamp(10px, 1.2vw, 14px);
+    color: rgba(77, 255, 90, 0.6);
+    letter-spacing: 3px;
+  }
+
+  /* ---- Main jumbotron display ---- */
+  .main-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .celebrate-line {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(20px, 3.5vw, 48px);
+    letter-spacing: clamp(4px, 0.6vw, 8px);
+    color: #fff;
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, 0.8),
+      0 0 30px rgba(255, 184, 0, 0.6),
+      0 0 60px rgba(255, 100, 0, 0.4);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.8s, transform 0.8s;
+    margin-bottom: 8px;
+  }
+  .celebrate-line.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .isha-line {
+    display: flex;
+    gap: clamp(4px, 1vw, 14px);
+    margin-top: 4px;
+  }
+  .isha-letter {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(54px, 12vw, 170px);
+    line-height: 0.9;
+    font-weight: bold;
+    background: linear-gradient(180deg, #fff 0%, #ffd76b 35%, #ff4d8d 70%, #ff2a3a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 18px rgba(255, 77, 141, 0.7))
+            drop-shadow(0 0 40px rgba(255, 184, 0, 0.5));
+    opacity: 0;
+    transform: translateY(80px) scale(0.4) rotate(-8deg);
+    transition: transform 0.7s cubic-bezier(.34,1.56,.64,1), opacity 0.4s;
+  }
+  .isha-letter.show {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+    animation: letterPulse 2.5s ease-in-out infinite;
+  }
+  .isha-letter.show:nth-child(1) { animation-delay: 0s; }
+  .isha-letter.show:nth-child(2) { animation-delay: 0.15s; }
+  .isha-letter.show:nth-child(3) { animation-delay: 0.3s; }
+  .isha-letter.show:nth-child(4) { animation-delay: 0.45s; }
+
+  @keyframes letterPulse {
+    0%, 100% { filter: drop-shadow(0 0 18px rgba(255, 77, 141, 0.7)) drop-shadow(0 0 40px rgba(255, 184, 0, 0.5)); }
+    50% { filter: drop-shadow(0 0 30px rgba(255, 77, 141, 1)) drop-shadow(0 0 70px rgba(255, 184, 0, 0.8)); }
+  }
+
+  .sub-message {
+    font-family: 'VT323', monospace;
+    font-size: clamp(14px, 1.8vw, 22px);
+    letter-spacing: 3px;
+    color: #ffd76b;
+    text-shadow: 0 0 10px rgba(255, 215, 107, 0.6);
+    margin-top: 16px;
+    opacity: 0;
+    transition: opacity 1s;
+  }
+  .sub-message.show { opacity: 1; }
+
+  /* ---- Ticker ---- */
+  .ticker-wrap {
+    border-top: 1px solid rgba(255, 184, 0, 0.15);
+    padding-top: 8px;
+    height: 26px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ticker {
+    font-family: 'VT323', monospace;
+    font-size: clamp(13px, 1.6vw, 20px);
+    color: var(--led-amber);
+    text-shadow: 0 0 8px rgba(255, 184, 0, 0.5);
+    white-space: nowrap;
+    animation: tickerScroll 28s linear infinite;
+    letter-spacing: 2px;
+  }
+  @keyframes tickerScroll {
+    from { transform: translateX(100%); }
+    to { transform: translateX(-100%); }
+  }
+
+  /* =========================================================
+     EFFECTS — confetti, fireworks
+     ========================================================= */
+  .confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    overflow: hidden;
+  }
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 14px;
+    top: -20px;
+    opacity: 0;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { opacity: 0; transform: translateY(0) rotate(0deg); }
+    10% { opacity: 1; }
+    100% { opacity: 0.7; transform: translateY(110vh) rotate(720deg); }
+  }
+
+  .firework {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 40;
+  }
+
+  /* =========================================================
+     CONTROLS
+     ========================================================= */
+  .controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 200;
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.6s;
+  }
+  .controls.show { opacity: 1; }
+  .ctrl-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    letter-spacing: 2px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: background 0.2s;
+  }
+  .ctrl-btn:hover { background: rgba(255, 184, 0, 0.2); }
+
+  /* Mobile tweaks */
+  @media (max-width: 600px) {
+    .jumbotron-wrap { width: 96vw; }
+    .strut { display: none; }
+    .crowd { height: 70px; }
+    .crowd-head { width: 16px; height: 22px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- =========================================================
+       WELCOME SCREEN
+       ========================================================= -->
+  <div id="welcome">
+    <div class="welcome-stadium-bg"></div>
+    <div class="lights-row">
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+      <div class="light"></div>
+    </div>
+
+    <div class="welcome-content">
+      <div class="welcome-kicker">◆ SECTION 24 · ROW A · SEAT 1 ◆</div>
+      <h1 class="welcome-title">THE STADIUM<br/>AWAITS</h1>
+      <p class="welcome-sub">A SPECIAL NIGHT IS ABOUT TO BEGIN</p>
+      <button class="enter-btn" id="enterBtn">▶ ENTER STADIUM</button>
+      <div class="audio-hint">PLEASE ENABLE SOUND FOR THE FULL EXPERIENCE</div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       STADIUM SCENE
+       ========================================================= -->
+  <div id="stadium">
+    <div class="spotlight s1"></div>
+    <div class="spotlight s2"></div>
+
+    <div class="jumbotron-wrap">
+      <div class="strut left"></div>
+      <div class="strut right"></div>
+
+      <div class="jumbotron">
+        <div class="jumbotron-inner">
+
+          <!-- Scoreboard top strip -->
+          <div class="scoreboard">
+            <div class="team home">
+              <span class="team-name">HOME</span>
+              <span class="team-score" id="homeScore">0</span>
+            </div>
+            <div>
+              <div class="clock-label">4TH QUARTER</div>
+              <div class="clock" id="clock">00:00</div>
+            </div>
+            <div class="team away">
+              <span class="team-score" id="awayScore">0</span>
+              <span class="team-name">GUESTS</span>
+            </div>
+          </div>
+
+          <!-- Main display -->
+          <div class="main-display">
+            <div class="celebrate-line" id="celebrateLine">★ TONIGHT WE CELEBRATE ★</div>
+            <div class="isha-line">
+              <span class="isha-letter">I</span>
+              <span class="isha-letter">S</span>
+              <span class="isha-letter">H</span>
+              <span class="isha-letter">A</span>
+            </div>
+            <div class="sub-message" id="subMessage">THE CROWD GOES WILD</div>
+          </div>
+
+          <!-- Ticker -->
+          <div class="ticker-wrap">
+            <div class="ticker">
+              ★ MVP OF THE NIGHT: ISHA ★ NEW RECORD: MOST SMILES IN A SINGLE EVENING ★
+              ATTENDANCE: SOLD OUT ★ WEATHER: PERFECT ★ NEXT GAME: TOMORROW ★ AND THE
+              DAY AFTER ★ AND EVERY DAY AFTER THAT ★ TONIGHT WE CELEBRATE ISHA ★
+              CHEER LOUDER ★ SHE DESERVES THE WORLD ★
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Crowd at bottom -->
+    <div class="crowd" id="crowd"></div>
+  </div>
+
+  <!-- Effects layers -->
+  <div class="confetti-container" id="confettiContainer"></div>
+
+  <!-- Controls -->
+  <div class="controls" id="controls">
+    <button class="ctrl-btn" id="muteBtn">🔊 MUTE</button>
+    <button class="ctrl-btn" id="replayBtn">⟳ REPLAY</button>
+  </div>
+
+<script>
+/* =========================================================
+   STADIUM JUMBOTRON — for Isha
+   Audio synthesized via Web Audio API so the file is self-contained.
+   ========================================================= */
+
+const $ = (id) => document.getElementById(id);
+const welcome = $('welcome');
+const stadium = $('stadium');
+const enterBtn = $('enterBtn');
+const muteBtn = $('muteBtn');
+const replayBtn = $('replayBtn');
+const controls = $('controls');
+const confettiContainer = $('confettiContainer');
+
+let audioCtx = null;
+let masterGain = null;
+let crowdNodes = [];
+let isMuted = false;
+
+/* ---------- Audio: crowd roar (filtered noise + modulation) ---------- */
+function createCrowdRoar() {
+  // Long noise buffer (looped)
+  const duration = 8;
+  const buffer = audioCtx.createBuffer(2, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buffer.getChannelData(ch);
+    for (let i = 0; i < data.length; i++) {
+      // Pink-ish noise (averaged white) for a warmer, crowd-like texture
+      const n = (Math.random() + Math.random() + Math.random()) / 3 - 0.5;
+      data[i] = n * 1.6;
+    }
+  }
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+  noise.loop = true;
+
+  // Band-pass to shape it like human-voice frequencies
+  const bp = audioCtx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 700;
+  bp.Q.value = 0.6;
+
+  const hp = audioCtx.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 180;
+
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 3500;
+
+  // Slow LFO modulating volume — gives the "ebbing roar" feel
+  const lfo = audioCtx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 0.25;
+  const lfoGain = audioCtx.createGain();
+  lfoGain.gain.value = 0.18;
+
+  const crowdGain = audioCtx.createGain();
+  crowdGain.gain.value = 0.0; // we fade in
+  lfo.connect(lfoGain);
+  lfoGain.connect(crowdGain.gain);
+
+  noise.connect(hp).connect(bp).connect(lp).connect(crowdGain).connect(masterGain);
+
+  noise.start();
+  lfo.start();
+
+  // Fade in
+  const now = audioCtx.currentTime;
+  crowdGain.gain.setValueAtTime(0, now);
+  crowdGain.gain.linearRampToValueAtTime(0.32, now + 1.8);
+
+  crowdNodes.push(noise, lfo);
+  return { gain: crowdGain };
+}
+
+/* ---------- Audio: occasional whistles ---------- */
+function scheduleWhistles() {
+  const whistle = () => {
+    if (!audioCtx || isMuted) return;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'square';
+    const startFreq = 1800 + Math.random() * 400;
+    osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+    osc.frequency.linearRampToValueAtTime(startFreq + 200, audioCtx.currentTime + 0.4);
+    g.gain.setValueAtTime(0, audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.05);
+    g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+    osc.connect(g).connect(masterGain);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.55);
+  };
+
+  const loop = () => {
+    whistle();
+    setTimeout(loop, 2500 + Math.random() * 3500);
+  };
+  setTimeout(loop, 1500);
+}
+
+/* ---------- Audio: air horn blast ---------- */
+function airHorn() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  for (let i = 0; i < 3; i++) {
+    const t = now + i * 0.35;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, t);
+    osc.frequency.linearRampToValueAtTime(220, t + 0.25);
+    // detuned partner for thickness
+    const osc2 = audioCtx.createOscillator();
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(182, t);
+    osc2.frequency.linearRampToValueAtTime(222, t + 0.25);
+
+    const lp = audioCtx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 2000;
+
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.22, t + 0.03);
+    g.gain.linearRampToValueAtTime(0.22, t + 0.25);
+    g.gain.linearRampToValueAtTime(0, t + 0.3);
+
+    osc.connect(lp);
+    osc2.connect(lp);
+    lp.connect(g).connect(masterGain);
+    osc.start(t); osc.stop(t + 0.32);
+    osc2.start(t); osc2.stop(t + 0.32);
+  }
+}
+
+/* ---------- Audio: triumphant fanfare ---------- */
+function playFanfare() {
+  if (!audioCtx) return;
+  // Notes in Hz — celebratory progression in C major
+  // Pattern: short fanfare → sustained chord
+  const seq = [
+    [['C4'], 0.15],
+    [['E4'], 0.15],
+    [['G4'], 0.15],
+    [['C5'], 0.3],
+    [['G4'], 0.15],
+    [['C5'], 0.5],
+    [['C5','E5','G5'], 1.8], // big chord
+  ];
+
+  const noteToHz = (n) => {
+    const map = { 'C4':261.63,'D4':293.66,'E4':329.63,'F4':349.23,'G4':392.00,'A4':440.00,'B4':493.88,
+                  'C5':523.25,'D5':587.33,'E5':659.25,'F5':698.46,'G5':783.99,'A5':880.00 };
+    return map[n];
+  };
+
+  let t = audioCtx.currentTime;
+  seq.forEach(([notes, dur]) => {
+    notes.forEach(n => {
+      const f = noteToHz(n);
+      // brass-ish: triangle + saw blend through lowpass
+      const osc1 = audioCtx.createOscillator();
+      osc1.type = 'sawtooth';
+      osc1.frequency.value = f;
+      const osc2 = audioCtx.createOscillator();
+      osc2.type = 'triangle';
+      osc2.frequency.value = f * 2;
+      const g = audioCtx.createGain();
+      const lp = audioCtx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 2800;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.12, t + 0.04);
+      g.gain.linearRampToValueAtTime(0.10, t + dur * 0.6);
+      g.gain.linearRampToValueAtTime(0, t + dur);
+      osc1.connect(lp);
+      osc2.connect(lp);
+      lp.connect(g).connect(masterGain);
+      osc1.start(t); osc1.stop(t + dur + 0.05);
+      osc2.start(t); osc2.stop(t + dur + 0.05);
+    });
+    t += dur;
+  });
+}
+
+/* ---------- Audio: subtle background loop after fanfare ---------- */
+function startBackgroundLoop() {
+  if (!audioCtx) return;
+  // Gentle arpeggio in C major that repeats
+  const pattern = [
+    ['C4', 0.5], ['E4', 0.5], ['G4', 0.5], ['C5', 0.5],
+    ['B4', 0.5], ['G4', 0.5], ['E4', 0.5], ['C4', 0.5],
+    ['F4', 0.5], ['A4', 0.5], ['C5', 0.5], ['F5', 0.5],
+    ['E5', 0.5], ['C5', 0.5], ['A4', 0.5], ['F4', 0.5],
+  ];
+  const noteToHz = (n) => {
+    const map = { 'C4':261.63,'D4':293.66,'E4':329.63,'F4':349.23,'G4':392.00,'A4':440.00,'B4':493.88,
+                  'C5':523.25,'D5':587.33,'E5':659.25,'F5':698.46,'G5':783.99 };
+    return map[n];
+  };
+
+  const playPattern = () => {
+    if (!audioCtx || isMuted) return;
+    let t = audioCtx.currentTime;
+    pattern.forEach(([n, dur]) => {
+      const f = noteToHz(n);
+      const osc = audioCtx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = f;
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.045, t + 0.03);
+      g.gain.linearRampToValueAtTime(0, t + dur);
+      osc.connect(g).connect(masterGain);
+      osc.start(t); osc.stop(t + dur + 0.05);
+      t += dur;
+    });
+    setTimeout(playPattern, pattern.length * 500);
+  };
+
+  // Begin loop after fanfare completes
+  setTimeout(playPattern, 3800);
+}
+
+/* =========================================================
+   VISUAL SEQUENCE
+   ========================================================= */
+
+function buildCrowd() {
+  const crowd = $('crowd');
+  const W = window.innerWidth;
+  const spacing = 26;
+  const count = Math.floor(W / spacing);
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    const left = i * spacing + (Math.random() * 8 - 4);
+    const bottom = Math.random() * 20;
+    const headSize = 0.8 + Math.random() * 0.4;
+    const armDelay = (Math.random() * 1.4).toFixed(2);
+    html += `
+      <div class="crowd-head" style="left:${left}px; bottom:${bottom}px; transform:scale(${headSize})"></div>
+      <div class="crowd-arm" style="left:${left + 9}px; bottom:${bottom + 22}px; animation-delay:${armDelay}s;"></div>
+    `;
+  }
+  crowd.innerHTML = html;
+}
+
+function animateScores() {
+  // Home (Isha's team) wins by a landslide
+  let home = 0, away = 0;
+  const homeTarget = 100;
+  const awayTarget = 0;
+  const homeEl = $('homeScore');
+  const awayEl = $('awayScore');
+  const tick = setInterval(() => {
+    home += Math.ceil(Math.random() * 6);
+    if (home >= homeTarget) { home = homeTarget; clearInterval(tick); }
+    homeEl.textContent = home;
+    awayEl.textContent = away;
+  }, 40);
+}
+
+function runClock() {
+  const clock = $('clock');
+  let m = 0, s = 0;
+  setInterval(() => {
+    s++;
+    if (s >= 60) { s = 0; m++; }
+    clock.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }, 1000);
+}
+
+/* Confetti */
+const colors = ['#ffd76b', '#ff4d8d', '#ff2a3a', '#4dff5a', '#5ab8ff', '#fff', '#ffb800'];
+function spawnConfetti(n = 60) {
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = (3 + Math.random() * 3) + 's';
+    c.style.animationDelay = (Math.random() * 2) + 's';
+    c.style.transform = `rotate(${Math.random() * 360}deg)`;
+    if (Math.random() > 0.5) {
+      c.style.borderRadius = '50%';
+      c.style.width = '8px';
+      c.style.height = '8px';
+    }
+    confettiContainer.appendChild(c);
+    setTimeout(() => c.remove(), 7000);
+  }
+}
+
+function confettiBurst() {
+  spawnConfetti(80);
+  setTimeout(() => spawnConfetti(60), 1200);
+  setTimeout(() => spawnConfetti(50), 2400);
+  setTimeout(() => spawnConfetti(40), 4000);
+}
+
+/* Fireworks */
+function firework(x, y, color) {
+  const particles = 24;
+  for (let i = 0; i < particles; i++) {
+    const p = document.createElement('div');
+    p.className = 'firework';
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.background = color;
+    p.style.boxShadow = `0 0 10px ${color}`;
+    confettiContainer.appendChild(p);
+
+    const angle = (i / particles) * Math.PI * 2;
+    const dist = 80 + Math.random() * 80;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+    const duration = 800 + Math.random() * 400;
+
+    p.animate([
+      { transform: 'translate(0,0)', opacity: 1 },
+      { transform: `translate(${dx}px, ${dy + 50}px)`, opacity: 0 }
+    ], { duration, easing: 'cubic-bezier(.2,.7,.4,1)' });
+
+    setTimeout(() => p.remove(), duration);
+  }
+}
+
+function fireworksShow() {
+  const colorsFW = ['#ffd76b', '#ff4d8d', '#ff2a3a', '#4dff5a', '#5ab8ff', '#fff'];
+  let count = 0;
+  const total = 8;
+  const burst = () => {
+    if (count >= total) return;
+    const x = window.innerWidth * (0.2 + Math.random() * 0.6);
+    const y = window.innerHeight * (0.15 + Math.random() * 0.3);
+    firework(x, y, colorsFW[Math.floor(Math.random() * colorsFW.length)]);
+    count++;
+    setTimeout(burst, 600 + Math.random() * 400);
+  };
+  burst();
+}
+
+/* =========================================================
+   MAIN ENTRY
+   ========================================================= */
+
+function revealLetters() {
+  const letters = document.querySelectorAll('.isha-letter');
+  letters.forEach((l, i) => {
+    setTimeout(() => l.classList.add('show'), 200 + i * 220);
+  });
+}
+
+let started = false;
+function start() {
+  if (started) return;
+  started = true;
+
+  // Init audio (must be inside user gesture)
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.85;
+  masterGain.connect(audioCtx.destination);
+
+  // Hide welcome, show stadium
+  welcome.classList.add('hide');
+  setTimeout(() => welcome.style.display = 'none', 1100);
+
+  setTimeout(() => {
+    stadium.classList.add('show');
+    buildCrowd();
+    runClock();
+    animateScores();
+    createCrowdRoar();
+    scheduleWhistles();
+
+    // Reveal sequence
+    setTimeout(() => $('celebrateLine').classList.add('show'), 800);
+    setTimeout(() => { airHorn(); }, 1400);
+    setTimeout(() => { playFanfare(); revealLetters(); }, 1600);
+    setTimeout(() => { confettiBurst(); fireworksShow(); }, 2200);
+    setTimeout(() => $('subMessage').classList.add('show'), 3400);
+    setTimeout(() => startBackgroundLoop(), 4200);
+    setTimeout(() => controls.classList.add('show'), 5000);
+
+    // Periodic celebrations
+    setInterval(() => {
+      fireworksShow();
+      spawnConfetti(40);
+    }, 12000);
+    setInterval(() => airHorn(), 22000);
+  }, 600);
+}
+
+enterBtn.addEventListener('click', start);
+
+/* Mute control */
+muteBtn.addEventListener('click', () => {
+  if (!masterGain) return;
+  isMuted = !isMuted;
+  masterGain.gain.linearRampToValueAtTime(isMuted ? 0 : 0.85, audioCtx.currentTime + 0.3);
+  muteBtn.textContent = isMuted ? '🔇 UNMUTE' : '🔊 MUTE';
+});
+
+/* Replay celebration burst */
+replayBtn.addEventListener('click', () => {
+  airHorn();
+  confettiBurst();
+  fireworksShow();
+  playFanfare();
+});
+
+/* Rebuild crowd on resize */
+window.addEventListener('resize', () => {
+  if (stadium.classList.contains('show')) buildCrowd();
+});
+</script>
+</body>
+</html>
